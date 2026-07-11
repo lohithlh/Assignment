@@ -1,10 +1,10 @@
 pipeline {
     agent any
 
-   environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+    environment {
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
-        AWS_DEFAULT_REGION = 'ap-south-2'
+        AWS_DEFAULT_REGION    = 'ap-south-2'
     }
 
     stages {
@@ -12,40 +12,46 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-				    credentialsId: 'github-creds',
+                    credentialsId: 'github-creds',
                     url: 'https://github.com/lohithlh/Assignment.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
-        dir('Ec2') {
-            sh 'EC2 init'
+                dir('ec2') {
+                    sh 'terraform init'
+                }
+            }
         }
-    }
-}
 
         stage('Terraform Validate') {
             steps {
-                sh 'terraform validate'
+                dir('ec2') {
+                    sh 'terraform validate'
+                }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh 'terraform plan -out=tfplan'
+                dir('ec2') {
+                    sh 'terraform plan -out=tfplan'
+                }
             }
         }
 
         stage('Approval') {
             steps {
-                input message: 'Deploy Infrastructure?'
+                input 'Deploy Infrastructure?'
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh 'terraform apply -auto-approve tfplan'
+                dir('ec2') {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
             }
         }
     }
